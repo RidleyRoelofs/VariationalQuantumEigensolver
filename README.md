@@ -52,5 +52,60 @@ print("# of qubits needed: ", qubits)
 print(Hamiltonian)
 ~~~
 ## Circuit Creation
-
+The device is created with the call to `qml.device`, and 
+the number of electrons and provided to create the Hartree-Fock (HF)
+state. The HF state can be viewed as an approximate ground state.
+~~~python
 dev = qml.device("lightning.qubit", wires=qubits)
+
+electrons = 2
+hf = qml.qchem.hf_state(electrons, qubits)
+~~~
+The parameters that we will be tuning are inputs to the Givens rotation.
+In short, this is a unitary operation on the circuit that models the excitation of electrons.
+PennyLane has a tutorial on the Givens rotation that can be found here: https://pennylane.ai/qml/demos/tutorial_givens_rotations.
+
+We can then define the circuit with the possible Givens rotations when defining the `circuit`, and calculate 
+the expectation value of the state with `cost_fn`.
+~~~python
+def circuit(theta, wires):
+    #qml.BasisState(hf, wires=wires)
+    qml.AllSinglesDoubles(weights=theta, wires=wires, hf_state=hf, singles=singles, doubles=doubles)
+
+@qml.qnode(dev, interface="autograd")
+def cost_fn(theta):
+    circuit(theta, wires=range(qubits))
+    return qml.expval(Hamiltonian)
+~~~
+
+# Optimization
+The optimization of these parameters is done classically using gradient descent.
+The code for this section is similar to the PennyLane demo found here: https://pennylane.ai/qml/demos/tutorial_vqe.
+~~~python
+energy = [cost_fn(theta)]
+angle = [theta]
+
+max_iterations = 100
+conv_tol = 1e-06
+
+for n in range(max_iterations):
+    theta, prev_energy = opt.step_and_cost(cost_fn, theta)
+
+    energy.append(cost_fn(theta))
+    angle.append(theta)
+
+    conv = np.abs(energy[-1] - prev_energy)
+
+    if n % 2 == 0:
+        print(f"Step = {n},  Energy = {energy[-1]:.8f} Ha")
+
+    if conv <= conv_tol:
+        break
+
+print("\n" f"Final value of the ground-state energy = {energy[-1]:.8f} Ha")
+print("\n" f"Optimal value of the circuit parameter = {angle[-1]}")
+~~~
+
+After 19 iterations we converge to the final ground-state energy. `Final value of the ground-state energy = -0.46985398 Ha`.
+
+

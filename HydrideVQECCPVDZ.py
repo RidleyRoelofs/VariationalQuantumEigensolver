@@ -37,8 +37,6 @@ theta = np.zeros(num_theta, requires_grad=True)
 
 
 energy = [cost_fn(theta)]
-
-# store the values of the circuit parameter
 angle = [theta]
 
 max_iterations = 100

@@ -1,7 +1,7 @@
 # Variational Quantum Eigensolver
 An implementation and guide for creating a variational quantum eigensolver (VQE).
 
-This guide will focus approximating the ground state of a hydrogen anion,
+This guide will focus on approximating the ground state of a hydrogen anion,
 also known as hydride. The PennyLane website provides many
 guides similar to this one on their demos page here: https://pennylane.ai/qml/demonstrations
 
